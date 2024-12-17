@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.1">
+    <link rel='stylesheet' href="../static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js'></script>
+    <title>Bus Stop Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/bus-logo.ico">
+    <style>
+        * {
+            margin: 0 auto;
+        }
+        body {
+            font-family: 'Poppins', Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            color: #333333;
+            background-color: white;
+            padding: 0;
+        }
+
+        main {
+            max-width: 1600px;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 66px;
+            background-color: white;
+            color: black;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0px 1px 5px rgb(179, 179, 179);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            width: 35px;
+            margin-right: 10px;
+
+        }
+
+        .logo span {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: black;
+            text-decoration: none;
+            letter-spacing: 2px;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-login {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-login img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .nav-login a {
+            color: black;
+            text-decoration: none;
+            letter-spacing: 2px;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+        }
+
+        #login {
+            background-color: black;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+        }
+
+        .hero-section {
+            text-align: center;
+            background-image: url('../static/images/PlaceHolder.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 100px 20px;
+            position: relative;
+            height: 220px; 
+        }
+
+        .hero-section p {
+            font-size: 60px;
+            margin: 20px 0px 20px 0px;
+        }
+
+        .hero-section a {
+            background-color: black;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-size: 25px;
+        }
+
+        .hero-section p, .hero-section a {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); 
+            z-index: 1;
+        }
+
+        .features-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding:20px 40px 60px 40px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .feature:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .feature-description, .feature-video{
+            flex: 1;
+        }
+
+        .feature-description{
+            max-width: 50%;
+        }
+
+        .feature-video{
+            max-width: 50%;
+            display: flex;
+            justify-content: center;
+        }
+        .feature-video video{
+            border-radius: 15px;
+        }
+        .feature img {
+            width: 300px;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .feature h3 {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .feature p {
+            font-size: 20px;
+            color: #555;
+        }
+
+
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="WebPage.html" id="dashboard_Click_logo">
+            <div class="logo">
+                <img src="../static/images/bus-logo.png" alt="Logo">
+                <span>Smart Bus Stop</span>
+            </div>
+        </a>
+        <ul class="nav-links">
+            <li><a href="HomePage.html">Home</a></li>
+            <li><a href="AboutUs.html">About Us</a></li>
+            <li><a href="WebPage.html">Dashboard</a></li>
+            <li><a href="Admin.html">Admin</a></li>
+        </ul>
+        <ul class="nav-login">
+            <li><a href="#more" id="more">⋯</a></li>
+            <li><a href="#login" id="login">Login</a></li>
+            <li><a href="#profile"><img src="../static/images/pfp.jpg" alt="Profile"></a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="hero-section">
+            <p>SMART BUS STOP</p>
+            <a href="WebPage.html">View Dashboard</a>
+        </div>
+        <div class="features-section">
+            <div class="feature">
+                <div class="feature-description" style="margin: 0 65px;" >
+                    <h3 style="text-align: center;">3D Model Overview</h3>
+                    <p>Our Smart Bus Stop design is shown in this 3D model, featuring the layout and key elements like digital displays and smart lighting. The focus is on making the bus stop stylish and practical for a better commuter experience.</p>
+                    </div>
+                <div class="feature-video">
+                <video style="height: 300px;"poster="../static/images/busmodel.jpg" autoplay loop muted style="overflow: hidden; border-radius: 15px;">
+                    <source src="../static/images/busmodel.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                </div>                       
+            </div>
+            <div class="feature">
+                <div class="feature-description">
+                    <h3 style="text-align: center;">Hardware Components (BBBW) Overview</h3>
+                    <p>This video shows the technology in our Smart Bus Stop, including the BeagleBone Black Wireless modules and other hardware. It explains how sensors and devices work together to monitor conditions, ensure safety, and provide real-time information.</p>
+                    </div>    
+                    <div class="feature-video">
+                        <video style="height: 400px; border-radius: 15px; overflow: hidden;" poster="../static/images/0001-0480.jpg" autoplay loop muted>
+                            <source src="../static/images/0001-0480.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>                        
+                    </div>
+            </div>            
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2024 Smart Bus Stop. All rights reserved.</p>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="contact.html">Contact Us</a>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.1">
+    <link rel='stylesheet' href="../static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js'></script>
+    <title>Bus Stop Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/bus-logo.ico">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        .chart {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            flex: 1 1 calc(33.333% - 40px); /* Three charts per row */
+            position: relative;
+        }
+        .chart svg {
+            width: 100%;
+            height: 300px;
+        }
+        .title-graph {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background-color: rgba(0, 123, 255, 0.9);
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+            display: none;
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        .logs > .table-container {
+            max-height: 400px;
+            overflow-y: scroll;
+        }
+        .table-div > .table-container {
+            overflow-y: scroll;
+            max-height: 700px;
+        }
+        .table-container > table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table-container > th, .table-container > td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .table-container > th {
+            background-color: #f4f4f4;
+        }
+        #settings-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: transparent;
+            border-radius: 50%;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 1000;
+            border: 0px;
+            transition: all ease 0.03s;
+        }
+        #settings-button:hover {
+            transform: scale(1.1);
+            transition: all ease 0.1s;
+        }
+        #settings-button img {
+            width: 40px;
+            height: 40px;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+        .overlay-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 500px;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .slider-container label {
+            width: 320px; /* Set a fixed width for labels */
+            text-align: left;
+        }
+
+        .slider-container input[type="range"] {
+            padding-left: 20px;
+            accent-color: #28a745;
+
+        }
+        
+        .slider-container input[type="number"] {
+            transform: translateY(-2px);
+            width: 90px;
+            margin-right: 20px;
+        }
+        .setting_button {
+            background-color: #28a745; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .setting_button:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+        .setting_button:active {
+            background-color: #1e7e34;
+            transform: scale(0.95);
+        }
+    </style>
+    <script>
+        var announce;
+        const ipAddress = "http://172.20.10.5:5000"
+        $(document).ready(function() {
+            var socket = io.connect(ipAddress);
+
+            $('#submit-settings').click(function() {
+                settings = changeSetting();
+                socket.emit('Change_Settings_SQL', settings )
+                console.log("Changed Setting")
+                console.log(settings);
+            });
+
+        })
+
+        
+        function changeSetting() {
+            console.log("Setting Changed");
+
+            const valuesDict = {
+                edgeForceThreshold: document.getElementById('number-input-1').value,
+                edgeIRDistanceThreshold: document.getElementById('number-input-2').value,
+                edgeProximityThreshold: document.getElementById('number-input-3').value,
+                busForceThreshold: document.getElementById('number-input-4').value,
+                lightingProximityThreshold: document.getElementById('number-input-5').value,
+                ledTarget: document.getElementById('number-input-6').value
+            };
+
+            return valuesDict;
+        }
+
+        function updateSettings(settings) {
+            console.log(settings);
+            document.getElementById('number-input-1').value = settings.edge_force_threshold;
+            document.getElementById('slider-1').value = settings.edge_force_threshold;
+
+            document.getElementById('number-input-2').value = settings.edge_ir_dist_threshold;
+            document.getElementById('slider-2').value = settings.edge_ir_dist_threshold;
+
+            document.getElementById('number-input-3').value = settings.edge_prox_threshold;
+            document.getElementById('slider-3').value = settings.edge_prox_threshold;
+
+            document.getElementById('number-input-4').value = settings.bus_force_threshold;
+            document.getElementById('slider-4').value = settings.bus_force_threshold;
+
+            document.getElementById('number-input-5').value = settings.lighting_prox_threshold;
+            document.getElementById('slider-5').value = settings.lighting_prox_threshold;
+
+            document.getElementById('number-input-6').value = settings.led_target;
+            document.getElementById('slider-6').value = settings.led_target;
+        }
+
+        function fetchDataSettings() {
+            fetch(ipAddress + "/data/settings")
+            .then(response => response.json())
+            .then(newData => {
+                // Get the last item in the array
+                const lastItem = newData[newData.length - 1];
+
+                // Update the settings using the last item
+                updateSettings(lastItem);
+                console.log(lastItem);
+            })
+            .catch(error => {
+                console.error('Error fetching the JSON data:', error);
+            });
+
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get elements
+            const resetButton = document.getElementById('reset-settings');
+            const settingsButton = document.getElementById('settings-button');
+            const settingsOverlay = document.getElementById('settings-overlay');
+            const closeOverlayButton = document.getElementById('close-overlay');
+            const sliders = Array.from(document.querySelectorAll('.slider-container input[type="range"]'));
+            const numberInputs = Array.from(document.querySelectorAll('.slider-container input[type="number"]'));
+
+            resetButton.addEventListener('click', () => {
+                document.getElementById('number-input-1').value = 0.06;
+                document.getElementById('slider-1').value = 0.06;
+                
+                document.getElementById('number-input-2').value = 14;
+                document.getElementById('slider-2').value = 14;
+                
+                document.getElementById('number-input-3').value = 2400;
+                document.getElementById('slider-3').value = 2400;
+                
+                document.getElementById('number-input-4').value = 0.06;
+                document.getElementById('slider-4').value = 0.06;
+                
+                document.getElementById('number-input-5').value = 500;
+                document.getElementById('slider-5').value = 500;
+                
+                document.getElementById('number-input-6').value = 1200;
+                document.getElementById('slider-6').value = 1200;
+            });
+
+            // Show overlay on settings button click
+            settingsButton.addEventListener('click', () => {
+                settingsOverlay.style.display = 'block';
+                fetchDataSettings()
+            });
+
+            // Hide overlay on close button click
+            closeOverlayButton.addEventListener('click', () => {
+                settingsOverlay.style.display = 'none';
+            });
+            settingsOverlay.addEventListener('click', (event) => {
+                if (event.target === settingsOverlay) {
+                    settingsOverlay.style.display = 'none';
+                }
+            });
+
+            // Link sliders and number inputs
+            sliders.forEach((slider, index) => {
+                const numberInput = numberInputs[index];
+
+                slider.addEventListener('input', () => {
+                    numberInput.value = slider.value;
+                });
+
+                numberInput.addEventListener('input', () => {
+                    slider.value = numberInput.value;
+                });
+            });
+        });
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Log history data
+            const logEntries = [{
+                    announcement: 'Free Cheese burger',
+                    type: 'Community',
+                    time: '10:20am' 
+                },
+                {
+                    announcement: 'Car Accident, Street 21',
+                    type: 'Traffic Updates',
+                    time: '9:12am'
+                },
+                {
+                    announcement: 'Superman Spotted',
+                    type: 'Community',
+                    time: '5:14am'
+                },
+                {
+                    announcement: 'BBBW 1 Fully Operational',
+                    type: 'Update',
+                    time: '4:12am'
+                },
+                {
+                    announcement: 'BBBW 1 Down',
+                    type: 'Warnings',
+                    time: '4:02am'
+                },
+                {
+                    announcement: 'High Temperature Warning',
+                    type: 'Weather',
+                    time: '2:00am'
+                },
+                {
+                    announcement: 'Van Exploding, Drive 2',
+                    type: 'Traffic Updates',
+                    time: 'Yst 11:28pm'
+                }
+            ];
+
+            const logEntriesContainer = document.getElementById('log-entries');
+
+            logEntries.forEach(entry => {
+                const row = document.createElement('tr');
+                Object.values(entry).forEach(text => {
+                    const cell = document.createElement('td');
+                    cell.textContent = text;
+                    row.appendChild(cell);
+                });
+                logEntriesContainer.appendChild(row);
+            });
+
+            // Handle announcement submission
+            document.getElementById('send-announcement').addEventListener('click', () => {
+                var socket = io.connect(ipAddress);
+                const announcementType = document.getElementById('announcement-type').value;
+                const announcementText = document.getElementById('announcement-text').value;
+                socket.emit('Announcement_Event', { "Type": announcementType, "Text": announcementText}
+                );
+                if (announcementText.trim() !== "") {
+                    const time = new Date().toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    const newEntry = {
+                        announcement: announcementText,
+                        type: announcementType,
+                        time: time
+                    };
+
+                    // Add the new entry to the log table at the top
+                    const newRow = document.createElement('tr');
+                    Object.values(newEntry).forEach(text => {
+                        const newCell = document.createElement('td');
+                        newCell.textContent = text;
+                        newRow.appendChild(newCell);
+                    });
+                    logEntriesContainer.insertBefore(newRow, logEntriesContainer.firstChild);
+
+                    // Add transition animation
+                    newRow.style.transition = "background-color 0.5s ease";
+                    newRow.style.backgroundColor = "#e0f7fa"; // Highlight new entry
+                    setTimeout(() => {
+                        newRow.style.backgroundColor = "white"; // Remove highlight after animation
+                    }, 500);
+
+                    // Clear the form inputs
+                    document.getElementById('announcement-text').value = "";
+                } else {
+                    alert("Please enter an announcement.");
+                }
+            });
+        });
+  
+
+        document.addEventListener("DOMContentLoaded", function() {
+        const margin = { top: 20, right: 30, bottom: 30, left: 40 },
+            width = 680 - margin.left - margin.right,
+            height = 300 - margin.top - margin.bottom;
+
+        let data = [];
+        let intervalId;
+
+        const charts = [
+            { id: "chart-temp", key: "temperature", color: "steelblue" },
+            { id: "chart-humidity", key: "humidity", color: "green" },
+            { id: "chart-light", key: "light", color: "orange" },
+            { id: "chart-noise", key: "noise", color: "purple" },
+            { id: "chart-pressure", key: "pressure", color: "red" },
+            { id: "chart-voc", key: "voc", color: "brown" }
+        ];
+
+        const x = d3.scaleTime().range([0, width]);
+
+        charts.forEach(chart => {
+            chart.y = d3.scaleLinear().range([height, 0]);
+
+            chart.line = d3.line()
+                .x(d => x(d.timestamp))
+                .y(d => chart.y(d[chart.key]));
+
+            chart.svg = d3.select(`#${chart.id}`).append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            chart.xAxis = chart.svg.append("g")
+                .attr("transform", `translate(0,${height})`);
+
+            chart.yAxis = chart.svg.append("g");
+
+            chart.path = chart.svg.append("path")
+                .attr("fill", "none")
+                .attr("stroke", chart.color)
+                .attr("stroke-width", 1.5);
+
+            chart.circle = chart.svg.append("circle")
+                .attr("r", 0)
+                .attr("fill", chart.color)
+                .style("stroke", "white")
+                .attr("opacity", 0.7)
+                .style("pointer-events", "none");
+
+            chart.svg.append("rect")
+                .attr("width", width)
+                .attr("height", height)
+                .style("fill", "none")
+                .style("pointer-events", "all")
+                .on("mousemove", function(event) {
+                    if (!data.length) return;
+
+                    const [xCoord] = d3.pointer(event, this);
+                    const bisectDate = d3.bisector(d => d.timestamp).left;
+                    const x0 = x.invert(xCoord);
+                    const i = bisectDate(data, x0, 1);
+                    const d0 = data[i - 1];
+                    const d1 = data[i];
+                    const d = x0 - d0.timestamp > d1.timestamp - x0 ? d1 : d0;
+                    const xPos = x(d.timestamp);
+                    const yPos = chart.y(d[chart.key]);
+
+                    chart.circle.attr("cx", xPos).attr("cy", yPos);
+                    chart.circle.transition().duration(50).attr("r", 5);
+
+                    d3.select(`#${chart.id} .tooltip`)
+                        .style("display", "block")
+                        .style("left", `${xPos + margin.left + 10}px`)
+                        .style("top", `${yPos + margin.top + 10}px`)
+                        .html(`<strong>Timestamp:</strong> ${d.timestamp.toLocaleString()}<br><strong>${chart.key}:</strong> ${d[chart.key]}`);
+                })
+                .on("mouseleave", function() {
+                    chart.circle.transition().duration(50).attr("r", 0);
+                    d3.select(`#${chart.id} .tooltip`).style("display", "none");
+                });
+
+            // Add gridlines
+            chart.svg.selectAll("xGrid")
+                .data(x.ticks().slice(1))
+                .join("line")
+                .attr("x1", d => x(d))
+                .attr("x2", d => x(d))
+                .attr("y1", 0)
+                .attr("y2", height)
+                .attr("stroke", "#DDDDDD")
+                .attr("stroke-width", 0.5);
+
+            chart.svg.selectAll("yGrid")
+                .data(chart.y.ticks().slice(1))
+                .join("line")
+                .attr("x1", 0)
+                .attr("x2", width)
+                .attr("y1", d => chart.y(d))
+                .attr("y2", d => chart.y(d))
+                .attr("stroke", "#DDDDDD")
+                .attr("stroke-width", 0.5);
+        });
+
+        function update(newData) {
+            newData.forEach(d => {
+                d.timestamp = new Date(d.timestamp + "Z");
+                d.temperature = +d.temperature;
+                d.humidity = +d.humidity;
+                d.light = +d.light;
+                d.noise = +d.noise;
+                d.pressure = +d.pressure;
+                d.voc = +d.voc;
+            });
+
+            data = data.concat(newData).sort((a, b) => a.timestamp - b.timestamp);
+
+            const now = new Date();
+            const timeWindow = 5 * 60000; // 5 minutes
+
+            data = data.filter(d => now - d.timestamp <= timeWindow);
+
+            charts.forEach(chart => {
+                const filteredData = data.filter(d => d.timestamp >= new Date(now - timeWindow));
+
+                x.domain([new Date(now - timeWindow), now]);
+                chart.xAxis.call(d3.axisBottom(x));
+
+                chart.y.domain([d3.min(filteredData, d => d[chart.key]) - 1, d3.max(filteredData, d => d[chart.key]) + 1]);
+                chart.yAxis.call(d3.axisLeft(chart.y));
+
+                chart.path.datum(filteredData).attr("d", chart.line);
+            });
+        }
+
+        function fetchData() {
+            d3.json(ipAddress+"/data/environment").then(newData => {
+                update(newData);
+                // console.log(newData);
+            }).catch(error => {
+                console.error('Error fetching the JSON data:', error);
+            });
+        }
+
+        fetchData();
+        intervalId = setInterval(fetchData, 1000);
+    });
+
+    let currentPage = 1;
+        const limit = 10;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData(currentPage, limit);
+            
+            // document.getElementById('prev-page').addEventListener('click', () => {
+            //     if (currentPage > 1) {
+            //         currentPage--;
+            //         fetchData(currentPage, limit);
+            //     }
+            // });
+
+            // document.getElementById('next-page').addEventListener('click', () => {
+            //     currentPage++;
+            //     fetchData(currentPage, limit);
+            // });
+        });
+
+        function fetchData(page, limit) {
+            fetch(`http://localhost:3000/data?page=${page}&limit=${limit}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('table-body');
+                    tableBody.innerHTML = '';
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        Object.values(row).forEach(cell => {
+                            const td = document.createElement('td');
+                            td.textContent = cell;
+                            tr.appendChild(td);
+                        });
+                        tableBody.appendChild(tr);
+                    });
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        async function fetchData() {
+            const response = await fetch(ipAddress + '/data/bus');
+            const data = await response.json();
+            return data;
+        }
+
+        function updateTable(data) {
+            const order = ["bus_number", "actual_arrive_time", "predicted_arrive_time", "difference_in_time"];
+            const headers = ["Bus Number", "Actual Arrive Time", "Predicted Arrive Time", "Difference In Time"];
+
+            const tableBody = d3.select('#table-body');
+            tableBody.selectAll('tr').remove();
+
+            // Sort data by actual_arrive_time in descending order
+            data.sort((a, b) => new Date(b.actual_arrive_time) - new Date(a.actual_arrive_time));
+
+            const rows = tableBody.selectAll('tr')
+                .data(data)
+                .enter()
+                .append('tr');
+
+            rows.selectAll('td')
+                .data(d => order.map(key => d[key]))
+                .enter()
+                .append('td')
+                .text(d => d);
+
+            // Adding header row if it doesn't exist
+            const headerRow = d3.select('#header-row');
+            if (headerRow.selectAll('th').empty()) {
+                headerRow.selectAll('th')
+                    .data(headers)
+                    .enter()
+                    .append('th')
+                    .text(d => d);
+            }
+        }
+
+        async function refreshTable() {
+            const data = await fetchData();
+            updateTable(data);
+        }
+
+        // Initial table load
+        refreshTable();
+
+        // Refresh table every 5 seconds
+        setInterval(refreshTable, 5000);
+    </script>
+</head>
+<body>
+    <nav>
+        <a href="WebPage.html" id="dashboard_Click_logo">
+            <div class="logo">
+                <img src="../static/images/bus-logo.png" alt="Logo">
+                <span>Smart Bus Stop</span>
+            </div>
+        </a>
+        <ul class="nav-links">
+            <li><a href="HomePage.html">Home</a></li>
+            <li><a href="AboutUs.html">About Us</a></li>
+            <li><a href="WebPage.html">Dashboard</a></li>
+            <li><a href="Admin.html">Admin</a></li>
+        </ul>
+        <ul class="nav-login">
+            <li><a href="#more" id="more">⋯</a></li>
+            <li><a href="#login" id="login">Login</a></li>
+            <li><a href="#profile"><img src="../static/images/pfp.jpg" alt="Profile"></a></li>
+        </ul>
+    </nav>
+    <main>
+
+        <button id="settings-button">
+            <img src="../static/images/settings-gear-icon.svg" alt="Settings">
+        </button>
+    
+        <div id="settings-overlay" class="overlay">
+            <div class="overlay-content">
+                <h2>Threshold Settings</h2><br>
+                <div class="slider-container">
+                    <label>Edge Force Threshold: </label>
+                    <input type="number" id="number-input-1" min="0" max="5" value="0.06">
+                    <input type="range" id="slider-1" min="0" max="5" value="0.06">
+                </div>
+                <div class="slider-container">
+                    <label>Edge IR Distance Threshold: </label>
+                    <input type="number" id="number-input-2" min="0" max="100" value="14">
+                    <input type="range" id="slider-2" min="0" max="100" value="14">
+                </div>
+                <div class="slider-container">
+                    <label>Edge Proximity Threshold: </label>
+                    <input type="number" id="number-input-3" min="0" max="5000" value="2400">
+                    <input type="range" id="slider-3" min="0" max="5000" value="2400">
+                </div>
+                <div class="slider-container">
+                    <label>Bus Force Threshold: </label>
+                    <input type="number" id="number-input-4" min="0" max="5" value="0.06">
+                    <input type="range" id="slider-4" min="0" max="5" value="0.06">
+                </div>
+                <div class="slider-container">
+                    <label>Lighting Proximity Threshold: </label>
+                    <input type="number" id="number-input-5" min="0" max="5000" value="500">
+                    <input type="range" id="slider-5" min="0" max="5000" value="500">
+                </div>
+                <div class="slider-container">
+                    <label>LED Target: </label>
+                    <input type="number" id="number-input-6" min="0" max="2000" value="1200">
+                    <input type="range" id="slider-6" min="0" max="2000" value="1200">
+                </div><hr><br>
+                <button id="close-overlay" class="setting_button">Close</button>
+                <button id="submit-settings" class="setting_button">Submit</button>
+                <button id="reset-settings" class="setting_button">Reset</button>  
+            </div>
+        </div>
+
+        <section class="top">
+            <div class="container">
+                <div id="chart-temp" class="chart window">
+                    <div class="title-graph">Temperature Over Time</div>
+                    <div class="tooltip"></div>
+                </div>
+                <div id="chart-humidity" class="chart window">
+                    <div class="title-graph">Humidity Over Time</div>
+                    <div class="tooltip"></div>
+                </div>
+                <div id="chart-light" class="chart window">
+                    <div class="title-graph">Light Over Time</div>
+                    <div class="tooltip"></div>
+                </div>
+                <div id="chart-noise" class="chart window">
+                    <div class="title-graph">Noise Over Time</div>
+                    <div class="tooltip"></div>
+                </div>
+                <div id="chart-pressure" class="chart window">
+                    <div class="title-graph">Pressure Over Time</div>
+                    <div class="tooltip"></div>
+                </div>
+                <div id="chart-voc" class="chart window">
+                    <div class="title-graph">VOC Over Time</div>
+                    <div class="tooltip"></div>
+                </div>
+            </div>
+        </section>
+        <section class="bottom">
+            <div class="announcement-div">
+                <div class="announcement-stats window">
+                    <div class="announcement ">
+                        <h2>Send Announcement</h2>
+                        <form id="announcement-form">
+                            <div class="form-group">
+                                <select id="announcement-type">
+                                    <option value="Community">Community</option>
+                                    <option value="Traffic Updates">Traffic Updates</option>
+                                    <option value="Weather">Weather</option>
+                                    <option value="Update">Update</option>
+                                    <option value="Warnings">Warnings</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="announcement-text" placeholder="Type Announcement">
+                            </div>
+                            <button type="button" id="send-announcement">Send</button>
+                        </form>
+                    </div>
+    
+                </div>
+                <div class="logs window">
+                    <h2>Announcement Logs</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Announcements</th>
+                                    <th>Type</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="log-entries">
+                                <!-- Log entries will be inserted here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-div window">
+                <h2>Bus Timings Database</h2><br>
+                <div class="table-container">
+                    <table id="data-table">
+                        <thead>
+                            <tr id="header-row"></tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+    </main><br>
+    <footer>
+        <p>&copy; 2024 Smart Bus Stop. All rights reserved.</p>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="contact.html">Contact Us</a>
+    </footer>
+</body>
+</html>

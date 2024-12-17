@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.1">
+
+    <link rel='stylesheet' href="../static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js'></script>
+    <script>
+        var temperature_value;
+        var noise_value;
+        var humidity_value;
+        var pressure_value;
+        var light_value;
+        var VOC_value;
+        var BBBW1_Value, BBBW2_Value, BBBW3_Value, BBBW4_Value;
+        var Edge_Value;
+        var Motion_value;
+        var Bus_Force_Value;
+        var bbbwButtonId = "bbbw1";
+        var nextBusInfoDict = {};
+        var minorEmergency;
+        var majorEmergency;
+        var dutyCycleLight;
+
+        const ipAddress = "http://172.20.10.5:5000"
+        $(document).ready(function() {
+            var socket = io.connect(ipAddress);
+            socket.on('Web_BBBW1_Temperature', function(RxData) {
+                temperature_value = RxData;
+                updateDisplay($('#environmental').val());
+            });
+            socket.on('Web_BBBW1_Noise', function(RxData) {
+                noise_value = RxData;
+                // console.log("The noise: " + RxData)
+                updateDisplay($('#environmental').val());
+            });
+            socket.on('Web_BBBW1_Humidity', function(RxData) {
+                humidity_value = RxData;
+                updateDisplay($('#environmental').val());
+            });
+            socket.on('Web_BBBW1_Pressure', function(RxData) {
+                pressure_value = RxData;
+                updateDisplay($('#environmental').val());
+            });
+            socket.on('Web_BBBW3_Light', function(RxData) {
+                light_value = RxData;
+                updateDisplay($('#environmental').val());
+                // lightingStatus(light_value)
+            });
+            socket.on('Web_BBBW1_VOC', function(RxData) {
+                VOC_value = RxData;
+                updateDisplay($('#environmental').val());
+            });
+
+            socket.on('Web_BBBW2_Edging', function(RxData) {
+                Edge_Value = RxData;
+                edgingDetection(Edge_Value)
+            });
+
+            socket.on('Web_BBBW3_Motion_Event', function(RxData) {
+                Motion_value = RxData;
+                humanPresence(Motion_value)
+            });
+            
+            socket.on('Web_BBBW4_Minor_Emergency_Event', function(RxData) {
+                minorEmergency = RxData;
+                emergencyStatus(minorEmergency);
+            });
+
+            socket.on('Web_BBBW4_Emergency_Event', function(RxData){
+                majorEmergency = RxData;
+                emergencyStatus(majorEmergency);
+            });
+
+            socket.on("Web_BBBW4_Duty_Cycle_Event", function(RxData){
+                dutyCycleLight = RxData;
+                lightingStatus(dutyCycleLight);
+            })
+            let previousRxData = false;
+            socket.on('Web_BBBW3_Bus_Force_Event', function(RxData) {
+                if (RxData && !previousRxData) {
+                    console.log("Taking ")
+                    document.getElementById('sendButton').click();
+                    // startWebcam();
+                    // const base64String = takePicture_base64Convert();
+                    // stopWebcam();
+                    // socket.emit('Image_base64', base64String);
+                }
+                previousRxData = RxData;
+            });
+
+            $('#environmental').on('change', function() {
+                var selectedOption = $(this).val();
+                // console.log($(this).val())
+                updateDisplay(selectedOption);
+            });
+
+
+
+            socket.on('Web_BBBW_Status', function(RxData) {
+                // console.log('Web_BBBW_Status event received:', RxData);
+
+                // Access the properties of the RxData dictionary
+                // console.log('Web_BBBW_Status event received:', RxData);
+                
+                BBBW1_Value = RxData[1];
+                BBBW2_Value = RxData[2];
+                BBBW3_Value = RxData[3];
+                BBBW4_Value = RxData[4];
+            })
+
+
+        })
+
+        function edgingDetection(edgeValue) {
+            var imgElement = document.getElementById('edge-detected');
+            var textElement = document.getElementById('edge-text');
+            if (edgeValue) {
+                imgElement.src = '../static/images/alarm.png';
+                textElement.innerHTML = '<h1>Too Close</h1><p>Sounding Alarm</p>';
+            }
+            else {
+                imgElement.src = '../static/images/alarm-off.png';
+                textElement.innerHTML = '<h1>Safe</h1><p>No Alarm</p>';             
+            }           
+        }
+        
+        function humanPresence(motionValue) {
+            var socket = io.connect(ipAddress);
+            var imgElement = document.getElementById('human-detected');
+            var textElement = document.getElementById('human-detected-text')
+            if (motionValue) {
+                imgElement.src = '../static/images/walking.png';
+                textElement.innerHTML = 'Person<br>Detected';
+                socket.emit("BBBW4_PowerSaving", false);
+            }
+            else {
+                imgElement.src = '../static/images/No-movement.png';
+                textElement.innerHTML = 'No one<br>Detected<br> <small style="font-size: 20px; color: grey; line-height: 0.2;"> Powersaving <span style="position: relative; top: -15px;">Mode Enabled</span> </small>';
+                socket.emit("BBBW4_PowerSaving", true);
+            }
+        }
+        function lightingStatus(dutyCycle) {
+            var imgElement = document.getElementById('lightingImage');
+            var statusElement = document.getElementById('lightingStatusText');
+            var percentageElement = document.getElementById('lightingPercentage');
+
+            percentageElement.innerText = dutyCycle + "%";
+            // console.log(dutyCycle);
+            if (dutyCycle > 5) {
+                imgElement.src = '../static/images/light-on.svg';
+                statusElement.innerText = 'Light ON';
+            }
+            else {
+                imgElement.src = '../static/images/light-off.svg';
+                statusElement.innerText = 'Light OFF';
+            }
+        }
+
+        function emergencyStatus(emergencyValue) {
+            var imgWarnElement = document.getElementById('emergency-icon');
+            var imgElement = document.getElementById('emergency-img-icon');
+            var alertElement = document.getElementById('emergency-alert');
+            var statusElement = document.getElementById('emergency-status');
+            var emergencyStatusElement = document.getElementById('emergency-status-with-img');
+            var lastAlertTimeElement = document.getElementById('last-alert-time');
+
+            var d = new Date(); // for now
+            var hours = d.getHours().toString().padStart(2, '0');
+            var minutes = d.getMinutes().toString().padStart(2, '0');
+            var seconds = d.getSeconds().toString().padStart(2, '0');
+            var timeString = hours + ":" + minutes + ":" + seconds;
+
+
+            if (emergencyValue === "Calling 999") {
+                imgWarnElement.src = '../static/images/emergency-icon.png';
+                imgElement.src = '../static/images/police-car.png';
+                lastAlertTimeElement.innerText = timeString;
+                alertElement.innerText = 'Emergency Alert';
+                statusElement.innerHTML = 'Emergency<br>Button Activated';
+                emergencyStatusElement.innerText = "Calling 999";
+                setTimeout(function() {
+                    emergencyStatus("Reset");
+                }, 10000);
+            }
+            else if (emergencyValue === "Police") {
+                imgWarnElement.src = '../static/images/emergency-icon.png';
+                imgElement.src = '../static/images/police-car.png';
+                lastAlertTimeElement.innerText = timeString;
+                alertElement.innerText = 'Emergency Alert';
+                statusElement.innerHTML = 'Emergency<br>Button Activated';
+                emergencyStatusElement.innerText = "Calling the Police";
+                setTimeout(function() {
+                    emergencyStatus("Reset");
+                }, 10000);
+            }
+            else if (emergencyValue === "Ambulance") {
+                imgWarnElement.src = '../static/images/emergency-icon.png';
+                imgElement.src = '../static/images/ambulance.png';
+                lastAlertTimeElement.innerText = timeString;
+                alertElement.innerText = 'Emergency Alert';
+                statusElement.innerHTML = 'Emergency<br>Button Activated';
+                emergencyStatusElement.innerText = "Calling the Ambulance";
+                setTimeout(function() {
+                    emergencyStatus("Reset");
+                }, 10000);
+            }
+            else if (emergencyValue === "Fire") {
+                console.log("Fire");
+                imgWarnElement.src = '../static/images/emergency-icon.png';
+                imgElement.src = '../static/images/fire-engine.png';
+                lastAlertTimeElement.innerText = timeString;
+                alertElement.innerText = 'Emergency Alert';
+                statusElement.innerHTML = 'Emergency<br>Button Activated';
+                emergencyStatusElement.innerText = "Calling Fire Fighters";
+                setTimeout(function() {
+                    emergencyStatus("Reset");
+                }, 10000);
+            }
+            else if (emergencyValue === "Maintenance") {
+                imgWarnElement.src = '../static/images/emergency-icon.png';
+                imgElement.src = '../static/images/maintenance.png';
+                lastAlertTimeElement.innerText = timeString;
+                alertElement.innerText = 'Emergency Alert';
+                statusElement.innerHTML = 'Emergency<br>Button Activated';
+                emergencyStatusElement.innerText = "Calling Maintenance";
+                setTimeout(function() {
+                    emergencyStatus("Reset");
+                }, 10000);
+            }
+            else {
+                imgWarnElement.src = "../static/images/green-circle.png";
+                imgElement.src = ""; //no image
+                alertElement.innerText = 'No Emergency';
+                statusElement.innerHTML = 'Emergency<br>Button Not Activated';
+                emergencyStatusElement.innerText = "";
+            }
+        }
+
+
+
+        function makeBigNumberLookNice(value) {
+            if (value >= 1000) {
+                return (value / 1000).toFixed(1) + 'k';
+            }
+            return value.toString();
+        }
+
+        function updateDisplay(selectedOption) {
+            var display_text = '';
+            var color = '#000000'; // default color
+
+            switch (selectedOption) {
+                case 'temperature':
+                    if (temperature_value) {
+                        if (temperature_value > 35) {
+                            color = '#ff6b6b'; // red (bad)
+                        } else if (temperature_value > 25) {
+                            color = '#FFD700'; // yellow (not too bad)
+                        } else {
+                            color = '#32CD32'; // green (good)
+                        }
+                        display_text = `${temperature_value}<sup><small>°C</small></sup>`;
+                    } else {
+                        display_text = '-';
+                    }
+                    break;
+                case 'humidity':
+                    if (humidity_value) {
+                        if (humidity_value > 70) {
+                            color = '#ff6b6b'; // red (bad)
+                        } else if (humidity_value > 40) {
+                            color = '#FFD700'; // yellow (not too bad)
+                        } else {
+                            color = '#32CD32'; // green (good)
+                        }
+                        display_text = `${humidity_value}<small>%</small>`;
+                    } else {
+                        display_text = '-';
+                    }
+                    break;
+                case 'pressure':
+                    if (pressure_value) {
+                        if (pressure_value > 1.5) {
+                            color = '#ff6b6b'; // red (bad)
+                        } else if (pressure_value > 1) {
+                            color = '#FFD700'; // yellow (not too bad)
+                        } else {
+                            color = '#32CD32'; // green (good)
+                        }
+                        display_text = `${pressure_value} <small>bar</small>`;
+                    } else {
+                        display_text = '-';
+                    }
+                    break;
+                case 'voc':
+                    let formattedVOC = VOC_value ? makeBigNumberLookNice(VOC_value) : '-';
+                    if (VOC_value) {
+                        if (VOC_value > 1000) {
+                            color = '#ff6b6b'; // red (bad)
+                        } else if (VOC_value > 500) {
+                            color = '#FFD700'; // yellow (not too bad)
+                        } else {
+                            color = '#32CD32'; // green (good)
+                        }
+                        display_text = `${formattedVOC}<small>Ω</small>`;
+                    } else {
+                        display_text = '-';
+                    }
+                    break;
+                case 'noise':
+                    if (noise_value) {
+                        if (noise_value <= 0) {
+                            color = '#ff6b6b'; // red (bad)
+                            noise_value = 10;
+                            display_text = 10;
+                        }
+                        else if (noise_value > 7) {
+                            color = '#ff6b6b'; // red (bad)
+                        } else if (noise_value > 4) {
+                            color = '#FFD700'; // yellow (not too bad)
+                        } else {
+                            color = '#32CD32'; // green (good)
+                        }
+                        display_text = `${noise_value}`;
+                    } else {
+                        display_text = '10';
+                        color = '#ff6b6b'; // red (bad)
+
+                    }
+                    break;
+                case 'light':
+                    if (light_value) {
+                        if (light_value > 1200) {
+                            color = '#ff6b6b'; // red (bad)
+                        } else if (light_value > 500) {
+                            color = '#FFD700'; // yellow (not too bad)
+                        } else {
+                            color = '#32CD32'; // green (good)
+                        }
+                        display_text = `${light_value} <small>lux</small>`;
+                         
+                    } else {
+                        display_text = '-';
+                    }
+                    break;
+            }
+
+            if (display_text.length > 5) {
+                fontSize = 60;
+            }
+            else {
+                fontSize = 80;
+            }
+            $('#display-text').html(display_text).css({'color': color, 'font-size': fontSize});
+        }
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            updateDisplay("temperaure")
+        });
+
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.bbbw-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    bbbwButtonId = button.id;
+                    // console.log(button.id)
+                    updateBBBWStatus(button.id);
+                });
+            });
+
+            function updateBBBWStatus(buttonId) {
+                // console.log("It is doing the bbbwing" + buttonId)
+                let statusValue;
+                switch (buttonId) {
+                    case 'bbbw1':
+                        statusValue = BBBW1_Value;
+                        break;
+                    case 'bbbw2':
+                        statusValue = BBBW2_Value;
+                        break;
+                    case 'bbbw3':
+                        statusValue = BBBW3_Value;
+                        break;
+                    case 'bbbw4':
+                        statusValue = BBBW4_Value;
+                        break;
+                }
+                const statusElement = document.querySelector('.bbbw-status-value span');
+                if (statusValue === 1) {
+                    statusElement.textContent = 'ON';
+                    statusElement.style.color = 'green';
+                } 
+                else {
+                    statusElement.textContent = 'OFF';
+                    statusElement.style.color = 'red';
+                }
+            }
+            setInterval(function() {
+                updateBBBWStatus(bbbwButtonId);
+            }, 3000);
+        });
+
+        const allBusNo = new Set();
+        document.addEventListener('DOMContentLoaded', function() {
+            const busInfoContainer = document.getElementById('bus-info');
+            const busIdInput = document.getElementById('bus-id');
+            const fetchButton = document.getElementById('fetch-button');
+            const busSpan = document.getElementById('bus-span');
+            let apiUrl = 'https://arrivelah2.busrouter.sg/?id=54351';
+
+            function fetchBusData() {
+                nextBusInfoDict = {};
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        busInfoContainer.innerHTML = ''; // Clear previous data
+                        const services = data.services;
+                        const arrivingBuses = []; // List to store arriving buses
+
+                        services.forEach(service => {
+                            allBusNo.add(service.no)
+                            // console.log("ALL" + allBusNo)
+                            const busElement = document.createElement('div');
+                            busElement.classList.add('bus');
+
+                            const busNumber = document.createElement('div');
+                            busNumber.classList.add('bus-number');
+                            busNumber.textContent = service.no;
+
+                            busElement.appendChild(busNumber);
+
+                            const uniqueArrivals = new Set();
+
+                            // Store in dict
+                            // busNo: next time
+                            
+                            nextBusInfoDict[service.no] = new Date(service.next.time);
+
+                            [service.next, service.subsequent, service.next2, service.next3].forEach(arrival => {
+                                if (arrival) {
+                                    const currentTime = new Date();
+                                    const arrivalDateTime = new Date(arrival.time);
+                                    const remainingTime = (arrivalDateTime - currentTime) / 1000 / 60; // in minutes
+                                    const minutes = Math.floor(remainingTime);
+                                    const arrivalText = minutes >= 2 ? `${minutes} min` : minutes === 1 ? '1 min' : 'Arr';
+
+                                    if (arrivalText === 'Arr') {
+                                        arrivingBuses.push(service.no); // Add bus number to arriving buses list
+                                    }
+
+                                    if (!uniqueArrivals.has(arrivalText)) {
+                                        uniqueArrivals.add(arrivalText);
+
+                                        const arrivalInfo = document.createElement('div');
+                                        arrivalInfo.classList.add('arrival-info');
+
+                                        const arrivalTime = document.createElement('div');
+                                        arrivalTime.classList.add('arrival-time');
+                                        arrivalTime.textContent = arrivalText;
+                                        arrivalInfo.appendChild(arrivalTime);
+
+                                        const loadBar = document.createElement('div');
+                                        loadBar.classList.add('load-bar');
+
+                                        const loadBarFill = document.createElement('div');
+                                        loadBarFill.classList.add('load-bar-fill');
+
+                                        // Set color and width based on load
+                                        switch (arrival.load) {
+                                            case 'SEA':
+                                                loadBarFill.style.backgroundColor = 'green';
+                                                loadBarFill.style.width = '20%'; // 20% full
+                                                break;
+                                            case 'SDA':
+                                                loadBarFill.style.backgroundColor = 'orange';
+                                                loadBarFill.style.width = '50%'; // 50% full
+                                                break;
+                                            case 'LSD':
+                                                loadBarFill.style.backgroundColor = 'red';
+                                                loadBarFill.style.width = '80%'; // 80% full
+                                                break;
+                                        }
+
+                                        loadBar.appendChild(loadBarFill);
+                                        arrivalInfo.appendChild(loadBar);
+                                        busElement.appendChild(arrivalInfo);
+                                    }
+                                }
+                            });
+
+                            busInfoContainer.appendChild(busElement);
+                        });
+
+                        // Update the bus-span element with arriving buses
+                        if (arrivingBuses.length > 0) {
+                            const uniqueArrivingBuses = [...new Set(arrivingBuses)];
+                            busSpan.innerHTML = `${uniqueArrivingBuses.join('<br>')}`;
+                            
+                            const brCount = busSpan.innerHTML.split('<br>').length - 1;
+
+                            if (brCount >= 6) {
+                                busSpan.style.fontSize = '20px';
+                            } else {
+                                busSpan.style.fontSize = '40px';
+                            }
+                        } else {
+                            busSpan.textContent = 'No buses arriving';
+                            busSpan.style.fontSize = '40px';
+
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching bus data:', error);
+                        busInfoContainer.textContent = 'Error fetching bus data. Please try again later.';
+                    });
+            }
+
+            // Fetch bus data initially
+            fetchBusData();
+
+            setInterval(fetchBusData, 30000);
+
+            // Fetch data when the button is clicked
+            fetchButton.addEventListener('click', () => {
+                allBusNo.clear();
+                const busId = busIdInput.value.trim();
+                apiUrl = `https://arrivelah2.busrouter.sg/?id=${busId}`;
+                fetchBusData();
+            });
+
+            //Camera live feed and upload
+            let stream;
+
+            function startWebcam() {
+                const video = document.querySelector("#webcamVideo");
+                navigator.mediaDevices.getUserMedia({
+                        video: {
+                            width: {
+                                ideal: 1280
+                            },
+                            height: {
+                                ideal: 720
+                            },
+                            aspectRatio: 16 / 9
+                        }
+                    })
+                    .then(s => {
+                        stream = s;
+                        video.srcObject = stream;
+                        video.play();
+                    })
+                    .catch(err => {
+                        console.error("Error accessing webcam: ", err);
+                    });
+            }
+
+            function stopWebcam() {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                    const video = document.querySelector("#webcamVideo");
+                    video.srcObject = null;
+                }
+            }
+
+            function takePicture_base64Convert() {
+                const video = document.querySelector("#webcamVideo");
+                const canvas = document.querySelector("#snapshotCanvas");
+                const context = canvas.getContext("2d");
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const base64String = canvas.toDataURL('image/png');
+                const base64Output = document.querySelector("#base64Output");
+                base64Output.value = base64String;
+                return base64String;
+            }
+
+
+            function findNumbersInString(RxData, allBusNo) {
+                let allBusNoArray = Array.from(allBusNo);
+                let normalizedString = RxData.replace(/\s+/g, '');
+                allBusNoArray = allBusNoArray.sort((a, b) => b.toString().length - a.toString().length);
+
+                let foundNumbers = [];
+                let i = 0;
+                let length = normalizedString.length;
+
+                while (i < length) {
+                    let matchFound = false;
+                    for (let num of allBusNoArray) {
+                        let numStr = num.toString();
+                        let numLen = numStr.length;
+                        if (normalizedString.substring(i, i + numLen) === numStr) {
+                            foundNumbers.push(num);
+                            i += numLen;
+                            matchFound = true;
+                            break;
+                        }
+                    }
+                    if (!matchFound) {
+                        i += 1;
+                    }
+                }
+
+                return foundNumbers;
+            }
+
+            $(document).ready(function() {
+                startWebcam()
+                var socket = io.connect(ipAddress);
+                var base64String;
+                // console.log("This function is running");
+
+                $('#sendButton').click(function() {
+                    startWebcam()
+                    base64String = takePicture_base64Convert()
+                    stopWebcam()
+                    socket.emit('Image_base64', base64String);
+                });
+
+                socket.on('Web_Text_From_Image', function(RxData) {
+                    // Find the bus numbers in the RxData
+                    let foundNumbers = findNumbersInString(RxData, allBusNo);
+
+                    foundNumbers.forEach(number => {
+                        // console.log(number);
+                        $('#bus-number').html("Bus " + number + " has arrived!");
+                        $('#busDetectText').html("Bus Detected!<br><span>(Taking Picture)</span>")
+                        // Insert call fuction to send bus num, bus arr time, and the predicted one
+                        
+                        var dict = {
+                            "busNo": number,
+                            "realArrTime": Date(),
+                            "predictedArrTime": nextBusInfoDict[number]
+                        };
+
+                        socket.emit('Bus_Arrival_SQL', dict)
+
+                        const utterance = new SpeechSynthesisUtterance("Bus " + number + " has Arrived!");
+                        const voices = speechSynthesis.getVoices();
+                        utterance.voice = voices[5]; // Choose a specific voice
+                        speechSynthesis.speak(utterance);
+                        setTimeout(() => {
+                            $('#busDetectText').html("No Bus Detected!<br><span>(No Photos Taken)</span>");
+                            $('#bus-number').html("No Bus Arrived!");
+                        }, 8000); // 2000 milliseconds = 2 seconds
+                    });
+                });
+            });
+            speechSynthesis.onvoiceschanged = function() {
+                const voices = speechSynthesis.getVoices();
+                // console.log(voices); // Log voices to console
+            };
+
+        });
+
+    </script>
+    <title>Bus Stop Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/bus-logo.ico">
+</head>
+<body>
+    <nav>
+        <a href="WebPage.html" id="dashboard_Click_logo">
+            <div class="logo">
+                <img src="../static/images/bus-logo.png" alt="Logo">
+                <span>Smart Bus Stop</span>
+            </div>
+        </a>
+        <ul class="nav-links">
+            <li><a href="HomePage.html">Home</a></li>
+            <li><a href="AboutUs.html">About Us</a></li>
+            <li><a href="WebPage.html">Dashboard</a></li>
+            <li><a href="Admin.html">Admin</a></li>
+        </ul>
+        <ul class="nav-login">
+            <li><a href="#more" id="more">⋯</a></li>
+            <li><a href="#login" id="login">Login</a></li>
+            <li><a href="#profile"><img src="../static/images/pfp.jpg" alt="Profile"></a></li>
+        </ul>
+    </nav>
+    <main>
+        <section class="top">
+            <div>
+                <div class="environment window">
+                    <h2>Environment</h2>
+                    <div class="environmental">
+                        <select id="environmental">
+                            <option value="temperature">Temperature</option>
+                            <option value="humidity">Relative Humidity</option>
+                            <option value="pressure">Pressure</option>
+                            <option value="voc">VOC</option>
+                            <option value="noise">Noise Levels</option>
+                            <option value="light">Light Levels</option>
+                        </select>
+                    </div>
+                    <div class="environmental-value">
+                        <span id="display-text"></span>
+                    </div>
+                </div>
+                <div class="light-status window">
+                    <h2>Lighting Status</h2>
+
+                    <div>
+                        <img id="lightingImage" src="../static/images/light-on.svg">
+                        <div>
+                            <h1 id="lightingPercentage">100%</h1>
+                            <h3 id="lightingStatusText">Light ON</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bus-timings-view window">
+                <div class="input-container">
+                    <h2>Live Bus Timings</h2>
+                    <div>                    
+                        <span for="bus-id">Enter Bus Stop ID:&nbsp;</span>
+                        <input type="text" id="bus-id" value="54351">
+                        <button id="fetch-button">Search 🔍</button>
+                    </div>
+
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color green"></div>Seats Available</div>
+                    <div class="legend-item"><div class="legend-color amber"></div>Standing Available</div>
+                    <div class="legend-item"><div class="legend-color red"></div>Limited Standing</div>
+                </div>
+                <section class="bus-timings">
+                    <div id="bus-info" class="bus-info"></div>
+                </section>
+            </div>
+            <div class="bus-arrival-status window">
+                <h2>Bus Arriving (<1min)</h2>
+                <span id="bus-span"></span>
+            </div>
+        </section>
+        <section class="mid">
+            <div class="bbbw-status window">
+                <h2>BBBW Status</h2>
+                <div class="bbbw-buttons">
+                    <button id="bbbw1" class="bbbw-button active">BBBW1</button>
+                    <button id="bbbw2" class="bbbw-button">BBBW2</button>
+                    <button id="bbbw3" class="bbbw-button">BBBW3</button>
+                    <button id="bbbw4" class="bbbw-button">BBBW4</button>
+                </div>
+                <div class="bbbw-status-value window">
+                    <span>ON</span>
+                </div>
+            </div>
+            <div class="human-presence window">
+                <h2>Human Presence</h2>
+                <div>
+                    <h1 id="human-detected-text">Person<br>Detected</h1>
+                    <img src="../static/images/walking.png" id="human-detected">
+                </div>
+            </div>
+            <div class="edge-detection window">
+                <h2>Edge Detection</h2>
+                <div>
+                    <div id="edge-text">
+                        <h1>Too Close</h1>
+                        <p>Sounding Alarm</p>
+                    </div>
+                    <img src="../static/images/alarm.png" id="edge-detected">
+                </div>
+            </div>
+        </section>
+        <section class="lower-mid section">
+            <div class="emergency window">
+                <div id="last-alert">Last Alert: <span id="last-alert-time"></span></div>
+                
+                <img src="../static/images/emergency-icon.png" id="emergency-icon">
+                <h2 id="emergency-alert">Emergency Alert</h2>
+                <h3 id="emergency-status">Emergency<br>Button Activated</h3>
+                <div>
+                    <span id="emergency-status-with-img">Calling the Ambulance</span>
+                    <img src="../static/images/ambulance.png" id="emergency-img-icon">
+                </div>
+
+            </div>
+            <div class="camera window">
+                <div><svg><circle r="5" cx="5" cy="5" fill="red"></svg><span>Live</span></div>
+                <video id="webcamVideo" autoplay></video>
+                <canvas id="snapshotCanvas" width="640" height="480"></canvas>
+            </div>
+            <div class="camera-detection window">
+                <img src="../static/images/bussin.png" id="bus-icon">
+                <h2>Bus Detection</h2>
+                <h3 id="busDetectText">No Bus Detected!<br><span>(No Photos Taken)</span></h3>
+                <div id="bus-number">No Bus Arrived!</div>
+            </div>
+        </section>
+
+        <button id="sendButton">Send Base64 Image</button>
+        <textarea id="base64Output" rows="5" cols="60" readonly></textarea>
+    </main>
+    <footer>
+        <p>&copy; 2024 Smart Bus Stop. All rights reserved.</p>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="contact.html">Contact Us</a>
+    </footer>
+</body>
+</html>

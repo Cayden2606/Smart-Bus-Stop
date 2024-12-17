@@ -1,0 +1,794 @@
+* {
+    margin: 0 auto;
+}
+
+
+body {
+    font-family: 'Poppins', Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: #333333;
+    background-color: white;
+    padding: 0;
+    width: 100%;
+
+}
+
+
+main {
+    max-width: 1600px;
+
+}
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 66px;
+    background-color: white;
+    color: black;
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0px 1px 5px rgb(179, 179, 179);
+}
+
+#dashboard_Click_logo {
+    text-decoration: none;
+    color:black;
+}
+
+#dashboard_Click_logo:link { 
+    text-decoration: none; 
+} 
+
+#dashboard_Click_logo:visited { 
+    text-decoration: none; 
+} 
+
+#dashboard_Click_logo:hover { 
+    text-decoration: none; 
+} 
+
+#dashboard_Click_logo:active { 
+    text-decoration: none; 
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+
+}
+
+.logo img {
+    width: 35px;
+    margin-right: 10px;
+
+}
+
+.logo span {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 25px;
+}
+
+.nav-links a {
+    color: black;
+    text-decoration: none;
+    letter-spacing: 2px;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+.nav-login {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.nav-login img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.nav-login a {
+    color: black;
+    text-decoration: none;
+    letter-spacing: 2px;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+}
+
+#login {
+    background-color: black;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    text-decoration: none;
+}
+
+#more {
+    background-color: lightgrey;
+    color: black;
+    padding: 10px 20px;
+    border-radius: 10px;
+    text-decoration: none;
+}
+
+.main {
+    padding: 20px;
+}
+
+.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    margin: 20px 0;
+}
+
+.environment {
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    margin: 0 10px;
+    height: 194px;
+    max-width: 337px;
+}
+.light-status {
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    margin: 0 10px;
+    height: 194px;
+    margin-top: 20px;
+}
+.light-status > div {
+    display: flex;
+    margin-top: 20px;
+    margin-left: -10px;
+}
+.light-status > div > div{
+    margin-top: -10px;
+}
+.light-status img {
+    width: 120px;
+}
+.light-status h1 {
+    font-size: 65px;
+    font-weight: bold;
+    margin-left: 10px;
+    margin-bottom: 0;
+}
+
+.light-status h3 {
+    font-size: 24px;
+    align-self: flex-end;
+    margin: -10px 0 0 10px;
+}
+
+#bus-span {
+    font-size: 40px;
+    padding-top: 20px;
+    transform: translateY(-50%);
+
+}
+.bus-arrival-status {
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    margin: 0 10px;
+    height: 450px;
+    text-align: center;
+}
+.bus-timings-view {
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    flex: 2;
+    margin: 0 10px;
+    height: 450px;
+}
+
+.environment h2 , .input-container{
+    padding-left: 20px;
+}
+.environmental {
+    padding-left: 20px;
+    position: relative;
+    /* z-index: 999; */
+}
+
+.environmental select {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.environmental-value {
+    text-align: center;
+    font-size: 80px;
+    font-weight: bolder;
+    color: #ff6b6b;
+    /* margin-top: -10px; */
+}
+
+.environmental-value sup {
+    font-size: 70px;
+}
+
+#environmental {
+    height: 35px;
+    width: 275px;
+}
+
+section {
+    padding: 0px 40px;
+}
+
+.window:hover {
+    transform: scale(1.02);
+    transition: ease 0.3s;
+}
+
+.window {
+    transition: ease 0.3s;
+}
+
+.mid {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    margin: 20px 0;
+}
+
+.bbbw-status, .human-presence, .edge-detection {
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    margin: 0 10px;
+    height: 300px;
+    text-align: center;
+}
+
+.bbbw-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    height: 40px;
+    margin-top: 20px;
+}
+
+.bbbw-button {
+    background-color: #f0f0f0;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.bbbw-button.active {
+    background-color: white;
+    border: #d1d1d1 solid 1px;
+}
+
+.bbbw-status-value {
+    font-size: 100px;
+    color: #28a745;
+    font-weight: bolder;
+    
+}
+
+.human-presence div {
+    margin-top: 40px;
+    display: flex;
+}
+
+#human-detected {
+    max-height: 200px;
+    max-width: 210px;
+    text-align: right;
+    flex: 1;
+    padding-right: 10px;
+}
+
+.human-presence h1 {
+    text-align: left;
+    flex: 1;
+    padding-left: 40px;
+    font-size: 40px;
+    font-weight: bold;
+    line-height: 45px;
+    margin-top: 30px;
+}
+
+.edge-detection > div {
+    display: flex;
+    margin-top: 60px;
+}
+
+#edge-detected {
+    max-height: 150px;
+    max-width: 175px;
+    text-align: right;
+    flex: 1;
+    padding-right: 25px;
+    margin-top: -15px;
+}
+
+.edge-detection > div > div {
+    text-align: left;
+    padding-left: 40px;
+    font-size: 30px;
+    font-weight: bold;
+    line-height: 45px;
+}
+
+#edge-text p {
+    font-size: large;
+    color: #5a5a5a;
+}
+
+.bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    margin: -20px 0;
+}
+
+.logs {
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    margin: 20px 10px;
+    text-align: left;
+    overflow-y: auto;
+    width: 550px;
+    height: 600px;
+}
+
+.logs h2 {
+    margin-top: 0;
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.table-container {
+    max-height: 550px;
+    overflow-y: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    font-size: 14px;
+    font-weight: bold;
+    color: #888;
+}
+
+td {
+    font-size: 14px;
+    color: #333;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+.announcement-stats {
+    align-items: stretch;
+    margin: 20px 10px;
+    width: 592px;
+}
+
+.announcement {
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    flex: 1;
+    text-align: center;
+}
+
+.announcement h2 {
+    margin-top: 0;
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+#announcement-form {
+    display: flex;
+    align-items: center;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    width: 325px;
+    margin-right: 10px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+select, input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #333;
+}
+
+button#send-announcement {
+    padding: 10px 20px;
+    border: none;
+    background-color: #28a745;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: -15px;
+    margin-left: 20px;
+}
+
+button#send-announcement:hover {
+    background-color: #218838;
+}
+
+.table-div {
+    margin: 20px 10px 20px 10px;
+    flex: 1;
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+
+}
+.announcement-div {
+    flex: 0.8;
+}
+/* .statistics .chart {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+} */
+
+/* .statistics .chart img {
+    max-height: 100%;
+    width: auto;
+} */
+.bus-timings {
+    display: flex;
+    gap: 0;
+}
+.bus-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    flex: 5.5;
+    /* width: 550px; */
+    height: 350px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.bus {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    max-height: 133px;
+}
+.bus-number {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.arrival-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+.arrival-time {
+    width: 60px;
+    text-align: center;
+    color: black;
+}
+.load-bar {
+    position: relative;
+    width: 100px;
+    height: 20px;
+    background-color: #e0e0e0;
+    margin-left: 10px;
+    border-radius: 5px;
+}
+.load-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    position: absolute;
+    left: 0;
+}
+.legend, .legend-item, .legend-color {margin: initial;  }
+
+.legend {
+    text-align: left;
+    position: absolute;
+    transform: translateX(1px);
+    margin: 0;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+    font-size: 10px;
+    padding-left: 0;
+    transform: translate(535px, -67px);
+}
+.legend-color {
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+}
+.green {
+    background-color: green;
+}
+.amber {
+    background-color: orange;
+}
+.red {
+    background-color: red;
+}
+.input-container {
+    margin-bottom: 20px;
+}
+.input-container div {
+    padding-top: 5px;
+}
+
+#bus-id {
+    width: 50px;
+    text-align: center;
+
+}
+#fetch-button {
+    height: 34px;
+    border-radius: 5px;
+    border: lightgray solid 1px;
+}
+#fetch-button:active {
+    background-color: #bababa;
+}
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+  /* Track */
+::-webkit-scrollbar-track {
+    background: #eee;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 30px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+
+
+
+
+/*Camera stuffs*/
+.lower-mid {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    margin: 20px 0;
+}
+
+.emergency, .camera-detection{
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    margin: 0 10px;
+    height: 360px;
+    text-align: center;
+}
+
+.camera {
+    position: relative;
+    background-color: white;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    width: 710px;
+    margin: 0 10px;
+    height: 400px;
+    text-align: center;
+}
+ 
+#last-alert{
+    position: absolute;
+    color: rgb(154, 153, 153);
+    font-size: smaller; 
+    transform: translate(23px, 0px);
+}
+
+#emergency-icon {
+    width: 76px;
+    margin-top: 50px;
+}
+#emergency-img-icon {
+    width: 29px;
+    transform: translate(3px, 5px);
+
+}
+.emergency h2{
+    margin-top: 10px;
+    font-size: 30px;
+}
+.emergency h3{
+    margin-top: 15px;
+    line-height: 30px;
+    font-size: 25px;
+    font-weight: 900;
+    color: #484848;
+}
+.emergency div{
+    margin-top: 15px;
+    color: #828282;
+    font-weight: bold;
+    font-size: 18px;
+
+}
+
+
+#bus-icon {
+    width: 100px;
+    margin-top: 40px;
+    transform: translateY(-15px);
+}
+.camera-detection h2{
+    margin-top: -13px;
+    font-size: 30px;
+
+}
+.camera-detection h3{
+    margin-top: 15px;
+    color: #484848;
+    font-size: 25px;
+    font-weight: 900;
+    line-height: 30px;
+
+}
+.camera-detection h3 span {
+    font-size: 22px;
+    font-weight: 550;
+    color: #545454;
+}
+.camera-detection div{
+    margin-top: 20px;
+    font-weight: bold;
+    color: #828282;
+    font-size: 20px;
+}
+.camera div {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+}
+.camera span {
+    color: white;
+    position: absolute;
+    left: 15px;
+    top: -7px;
+
+}
+@keyframes blink {
+    0% {
+        fill: red;
+    }
+    50% {
+        fill: transparent;
+    }
+    100% {
+        fill: red;
+    }
+}
+
+.camera svg circle {
+    animation: blink 1s infinite;
+}
+/*Live Camera*/
+#webcamVideo {
+    display: block;
+    width: 100%;
+    /* max-width: 640px;  */
+    aspect-ratio: 16 / 9;
+    background-color: grey;
+    border-radius: 9px;
+}
+#snapshotCanvas {
+    display: none;
+}
+
+#sendButton, #base64Output {
+    display: none;
+}
+
+footer {
+    background-color: #4f5b5e;
+    color: white;
+    text-align: center;
+    width: 100%;
+    bottom: 0;
+    height: 50px;
+
+}
+
+footer a {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 5px;
+    font-size: x-small;
+
+}
+
+footer p {
+    font-size: 11px;
+    padding-top: 10px;
+    margin-bottom: -5px;
+}
