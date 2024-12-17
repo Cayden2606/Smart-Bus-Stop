@@ -7,6 +7,13 @@ The **Smart Bus Stop System** enhances safety, convenience, and sustainability a
 
 ---
 
+## 🎥 Demo Video
+
+[![Smart Bus Stop Demo](https://img.youtube.com/vi/nPJaNwRcq4I/0.jpg)](https://www.youtube.com/watch?v=nPJaNwRcq4I)  
+Click the image to watch the video on YouTube.
+
+---
+
 ## 🌟 **Key Features**
 
 ### 1. **Environmental Monitoring**  
